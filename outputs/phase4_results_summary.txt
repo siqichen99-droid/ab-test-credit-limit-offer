@@ -1,11 +1,11 @@
 Offer Acceptance Rate
-  Control   : 11.1734%
-  Treatment : 12.3846%
-  Lift      : +1.2112%  (95% CI [+0.1120%, +2.3104%])
-  p-value   : 0.030832  SIGNIFICANT
+  Control   : 11.0909%
+  Treatment : 12.5302%
+  Lift      : +1.4393%  (95% CI [+0.3395%, +2.5391%])
+  p-value   : 0.010345  SIGNIFICANT
 
-Daily Revenue Impact : $7,325
-Annual Revenue Impact: $2,673,756
+Daily Revenue Impact : $8,705
+Annual Revenue Impact: $3,177,249
 
 Guardrails: default=PASS  fraud=PASS  spend=PASS
-Novelty: ratio=0.353  OK
+Novelty: ratio=0.650  OK

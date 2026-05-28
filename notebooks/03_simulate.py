@@ -1,6 +1,6 @@
 """
 =============================================================================
-03_simulate.py  —  PHASE 3: Generate Stratified Experiment Data
+03_simulate.py  -  PHASE 3: Generate Stratified Experiment Data
 =============================================================================
 
 WHAT THIS FILE DOES
@@ -18,14 +18,14 @@ The simulation lets us:
   3. Create realistic variation without using confidential data
 
 The key is that our simulation is CALIBRATED to real data (Phase 1), so
-the numbers are grounded in reality — not made up.
+the numbers are grounded in reality - not made up.
 
 WHAT IS STRATIFICATION?
 ------------------------
 Instead of randomly assigning all 22,970 users into control and treatment,
 we first divide users into 9 cells (3 utilization tiers × 3 payment segments)
 and then assign 50/50 within each cell. This ensures balanced representation
-across all user types — exactly what a production A/B testing platform does.
+across all user types - exactly what a production A/B testing platform does.
 
 SRM (Sample Ratio Mismatch)
 ----------------------------
@@ -36,7 +36,7 @@ teams at Meta, Airbnb, and Stripe run before reading any results.
 
 OUTPUTS
 -------
-data/ab_experiment_data.csv   (22,970 rows — one per user)
+data/ab_experiment_data.csv   (22,970 rows - one per user)
 data/ab_daily_summary.csv     (daily rollup for temporal charts)
 outputs/figures/phase3_simulation_validation.png
 =============================================================================
@@ -109,7 +109,7 @@ runtime   = cfg["runtime_days"]     # 14 days
 #   6. Assign each user to a random experiment day (1-14)
 #
 # WHY FIXED SEED FOR DEFAULT?
-#   Default risk is an inherent property of the user — it shouldn't be
+#   Default risk is an inherent property of the user - it shouldn't be
 #   affected by which variant they saw. By using a stratum-level fixed seed,
 #   we ensure control and treatment users in the same cell have the same
 #   default rate. This prevents random noise from triggering the guardrail.
@@ -117,8 +117,13 @@ runtime   = cfg["runtime_days"]     # 14 days
 
 rows = []
 for (ut, ps), s in STRATA.items():
-    n_seg = max(30, int(n_per_var * s["share"]))   # at least 30 users per cell
+    base_n = max(30, int(n_per_var * s["share"]))  # base count for this stratum
     for variant in ["control", "treatment"]:
+        # Fix 1 & 2: draw each variant's count independently with bounded ±3% noise
+        # so control and treatment naturally differ, but never by an implausible margin
+        noise = int(np.clip(np.random.normal(0, 0.015 * base_n),
+                            -0.03 * base_n, 0.03 * base_n))
+        n_seg = max(30, base_n + noise)
 
         # ── Acceptance: did the user click and accept the offer? ──────────────
         accept_rate = s["accept_ctrl"] if variant == "control" else s["accept_treat"]
@@ -145,7 +150,7 @@ for (ut, ps), s in STRATA.items():
         seg_seed     = abs(hash(f"{ut}_{ps}")) % (2**31)   # deterministic per stratum
         rng_def      = np.random.default_rng(seg_seed)     # separate RNG for defaults
         default_flag = rng_def.binomial(1, s["default_rate"], n_seg)
-        # Same draws for control and treatment → no spurious guardrail breaches
+        # Same draws for control and treatment -> no spurious guardrail breaches
 
         # ── Fraud flag: rare event, slightly elevated for delinquent users ────
         fraud_base   = 0.0045 if ps == "2+ mo delay" else 0.0018
@@ -158,8 +163,11 @@ for (ut, ps), s in STRATA.items():
             0.0
         )
 
-        # ── Experiment day: which day did this user enter the experiment? ──────
-        exp_day = np.random.randint(1, runtime + 1, n_seg)
+        # ── Experiment day: tile evenly across days then shuffle ─────────────
+        # Fix 3: randint left small strata with zero-user days, inflating the
+        # novelty ratio. Tiling guarantees every day has at least one observation.
+        exp_day = np.tile(np.arange(1, runtime + 1), n_seg // runtime + 1)[:n_seg]
+        np.random.shuffle(exp_day)
 
         # ── Append all users from this stratum × variant cell ─────────────────
         for i in range(n_seg):
@@ -173,7 +181,7 @@ for (ut, ps), s in STRATA.items():
                 "default_flag":  int(default_flag[i]),    # 1 = defaulted, 0 = did not
                 "fraud_flag":    int(fraud_flag[i]),       # 1 = fraud detected, 0 = clean
                 "limit_offered": round(limit_offered[i], 2),  # $ limit increase offered
-                "exp_day":       int(exp_day[i]),         # day 1–14
+                "exp_day":       int(exp_day[i]),         # day 1-14
             })
 
 # Convert to DataFrame
@@ -182,7 +190,7 @@ print(f"  Generated {len(df):,} rows across {len(STRATA)} strata × 2 variants")
 
 
 # =============================================================================
-# STEP 3: SRM Check — verify 50/50 assignment split
+# STEP 3: SRM Check - verify 50/50 assignment split
 #
 # Even though we designed for equal splits, let's formally verify using
 # a chi-squared goodness-of-fit test.
@@ -190,17 +198,17 @@ print(f"  Generated {len(df):,} rows across {len(STRATA)} strata × 2 variants")
 # Chi-squared test:
 #   Observed: [n_control, n_treatment]
 #   Expected: [n_total/2, n_total/2]
-#   p < 0.01 → significant mismatch → SRM detected → stop the analysis
+#   p < 0.01 -> significant mismatch -> SRM detected -> stop the analysis
 # =============================================================================
 
 counts   = df["variant"].value_counts()
 n_c, n_t = counts["control"], counts["treatment"]
 n_total  = n_c + n_t
 chi2, p  = stats.chisquare([n_c, n_t], f_exp=[n_total/2, n_total/2])
-srm_flag = "SRM DETECTED — halt analysis" if p < 0.01 else f"No SRM  (p = {p:.4f})"
-print(f"\n  SRM Check: control={n_c:,}  treatment={n_t:,}  χ²={chi2:.4f}  {srm_flag}")
+srm_flag = "SRM DETECTED - halt analysis" if p < 0.01 else f"No SRM  (p = {p:.4f})"
+print(f"\n  SRM Check: control={n_c:,}  treatment={n_t:,}  chi2={chi2:.4f}  {srm_flag}")
 
-# Per-stratum balance table (each cell should be exactly 1.000)
+# Per-stratum balance table (each cell should be near 1.000 with natural variation)
 balance = (
     df.groupby(["util_tier", "pay_segment", "variant"])
       .size().unstack("variant")
@@ -237,8 +245,8 @@ daily["cr"] = daily["k"] / daily["n"]   # daily conversion rate
 
 df.to_csv(os.path.join(DATA_DIR, "ab_experiment_data.csv"), index=False)
 daily.to_csv(os.path.join(DATA_DIR, "ab_daily_summary.csv"), index=False)
-print(f"\n  Saved → data/ab_experiment_data.csv  ({len(df):,} rows)")
-print(f"  Saved → data/ab_daily_summary.csv  ({len(daily)} rows)")
+print(f"\n  Saved -> data/ab_experiment_data.csv  ({len(df):,} rows)")
+print(f"  Saved -> data/ab_daily_summary.csv  ({len(daily)} rows)")
 
 
 # =============================================================================
@@ -296,9 +304,9 @@ sns.heatmap(ratio_data, annot=True, fmt=".3f", cmap="RdYlGn",
             linewidths=0.5, cbar_kws={"label":"T/C ratio (target = 1.000)"})
 ax4.set_title("Treatment/Control Ratio per Stratum\n(Green = balanced, red = SRM)", fontweight="bold")
 
-plt.suptitle("Phase 3 — Simulation & SRM Validation", fontsize=13, fontweight="bold", y=1.01)
+plt.suptitle("Phase 3 - Simulation & SRM Validation", fontsize=13, fontweight="bold", y=1.01)
 plt.tight_layout()
 fig_path = os.path.join(FIG_DIR, "phase3_simulation_validation.png")
 plt.savefig(fig_path, bbox_inches="tight")
-print(f"\n  Chart saved → {fig_path}")
+print(f"\n  Chart saved -> {fig_path}")
 print("  Phase 3 complete.\n")

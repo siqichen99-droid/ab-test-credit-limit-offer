@@ -49,9 +49,9 @@ n_c, n_t = len(ctrl), len(treat)
 
 results = {}
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # PRIMARY METRIC: Offer Acceptance Rate
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 k_c, k_t   = ctrl.accepted.sum(), treat.accepted.sum()
 cr_c, cr_t = k_c / n_c, k_t / n_t
 lift_abs   = cr_t - cr_c
@@ -75,9 +75,9 @@ print(f"  95% CI       [{ci[0]:+.4%},  {ci[1]:+.4%}]")
 print(f"  Z-stat       {z:.4f}   p = {p_cr:.6f}")
 print(f"  Result       {'SIGNIFICANT' if p_cr < ALPHA else 'Not significant'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # SECONDARY METRIC: Revenue per User (bootstrap CI)
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 rpu_c, rpu_t = ctrl.revenue.mean(), treat.revenue.mean()
 rpu_lift     = rpu_t - rpu_c
 u_stat, p_rpu = stats.mannwhitneyu(treat.revenue, ctrl.revenue, alternative="two-sided")
@@ -95,9 +95,9 @@ print(f"  Control  ${rpu_c:.4f}   Treatment  ${rpu_t:.4f}   Lift ${rpu_lift:+.4f
 print(f"  95% Bootstrap CI  [${rpu_ci[0]:+.4f},  ${rpu_ci[1]:+.4f}]")
 print(f"  Mann-Whitney p = {p_rpu:.6f}  {'PASS' if p_rpu < ALPHA else 'FAIL'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SUBGROUP ANALYSIS (util_tier × pay_segment)
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
+# SUBGROUP ANALYSIS (util_tier x pay_segment)
+# ==============================================================================
 print(f"\n  SUBGROUP ANALYSIS")
 sg = (
     df.groupby(["util_tier", "pay_segment", "variant"])["accepted"]
@@ -110,8 +110,8 @@ sg["lift_abs"] = sg.cr_treat - sg.cr_ctrl
 sg["lift_rel"] = sg.lift_abs / sg.cr_ctrl
 sg = sg.reset_index()
 
-print(f"\n  {'Util tier':<20} {'Pay segment':<15} {'Ctrl CR':>9} {'Treat CR':>9} {'Δ abs':>9} {'Δ rel':>9}")
-print("  " + "─"*73)
+print(f"\n  {'Util tier':<20} {'Pay segment':<15} {'Ctrl CR':>9} {'Treat CR':>9} {'Delta abs':>9} {'Delta rel':>9}")
+print("  " + "-"*73)
 for _, row in sg.iterrows():
     print(f"  {row['util_tier']:<20} {row['pay_segment']:<15} "
           f"{row['cr_ctrl']:>9.3%} {row['cr_treat']:>9.3%} "
@@ -119,9 +119,9 @@ for _, row in sg.iterrows():
 
 results["subgroup"] = sg.to_dict(orient="records")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # GUARDRAIL 1: Default Rate
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 k_def_c, k_def_t = ctrl.default_flag.sum(), treat.default_flag.sum()
 dr_c, dr_t       = k_def_c/n_c, k_def_t/n_t
 dr_lift           = dr_t - dr_c
@@ -133,12 +133,12 @@ results["gr_default"] = dict(rate_c=dr_c, rate_t=dr_t, lift=dr_lift,
                                p=p_def, passed=gr_default)
 
 print(f"\n  GUARDRAIL 1: Default Rate")
-print(f"  Control {dr_c:.4%}   Treatment {dr_t:.4%}   Δ={dr_lift:+.4%}   "
-      f"threshold ≤+0.50pp   {'PASS' if gr_default else 'FAIL'}")
+print(f"  Control {dr_c:.4%}   Treatment {dr_t:.4%}   Delta={dr_lift:+.4%}   "
+      f"threshold <=+0.50pp   {'PASS' if gr_default else 'FAIL'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # GUARDRAIL 2: Fraud Flag Rate
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 k_fr_c, k_fr_t = ctrl.fraud_flag.sum(), treat.fraud_flag.sum()
 fr_c, fr_t     = k_fr_c/n_c, k_fr_t/n_t
 fr_lift         = fr_t - fr_c
@@ -150,12 +150,12 @@ results["gr_fraud"] = dict(rate_c=fr_c, rate_t=fr_t, lift=fr_lift,
                             p=p_fr, passed=gr_fraud)
 
 print(f"  GUARDRAIL 2: Fraud Rate")
-print(f"  Control {fr_c:.4%}   Treatment {fr_t:.4%}   Δ={fr_lift:+.4%}   "
-      f"threshold ≤+0.10pp   {'PASS' if gr_fraud else 'FAIL'}")
+print(f"  Control {fr_c:.4%}   Treatment {fr_t:.4%}   Delta={fr_lift:+.4%}   "
+      f"threshold <=+0.10pp   {'PASS' if gr_fraud else 'FAIL'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # GUARDRAIL 3: Avg Monthly Spend (must not decline)
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 sp_c, sp_t = ctrl.monthly_spend.mean(), treat.monthly_spend.mean()
 sp_pct     = (sp_t - sp_c) / sp_c
 _, p_sp    = stats.ttest_ind(treat.monthly_spend, ctrl.monthly_spend, alternative="less")
@@ -165,12 +165,12 @@ results["gr_spend"] = dict(mean_c=sp_c, mean_t=sp_t, pct_chg=sp_pct,
                             threshold=-0.05, p=p_sp, passed=gr_spend)
 
 print(f"  GUARDRAIL 3: Monthly Spend")
-print(f"  Control ${sp_c:,.0f}   Treatment ${sp_t:,.0f}   Δ={sp_pct:+.2%}   "
-      f"threshold ≥-5.00%   {'PASS' if gr_spend else 'FAIL'}")
+print(f"  Control ${sp_c:,.0f}   Treatment ${sp_t:,.0f}   Delta={sp_pct:+.2%}   "
+      f"threshold >=-5.00%   {'PASS' if gr_spend else 'FAIL'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # NOVELTY EFFECT
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 pivot = daily.pivot(index="exp_day", columns="variant", values="cr").ffill()
 pivot["lift"] = pivot["treatment"] - pivot["control"]
 early_lift  = pivot[pivot.index <= 3]["lift"].mean()
@@ -185,9 +185,9 @@ print(f"\n  NOVELTY EFFECT")
 print(f"  Early lift (d1-3)  {early_lift:+.4%}   Steady (d4+)  {steady_lift:+.4%}"
       f"   Ratio {nov_ratio:.3f}   {'Inflation detected' if nov_flag else 'Stable'}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # BUSINESS IMPACT
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 rev_per_acc      = cfg["revenue_per_acceptance"]
 platform_mau     = cfg["platform_mau"]
 daily_eligible   = cfg["daily_eligible"]
@@ -212,12 +212,12 @@ print(f"  Daily eligible users        {daily_eligible:>10,}")
 print(f"  Incremental acceptances/day {incr_daily_acc:>10.0f}")
 print(f"  Revenue per acceptance      ${rev_per_acc:>9.2f}")
 print(f"  Daily revenue impact        ${daily_rev_impact:>9,.0f}")
-print(f"  95% CI (daily)              [${ci_rev_low:,.0f}  –  ${ci_rev_high:,.0f}]")
+print(f"  95% CI (daily)              [${ci_rev_low:,.0f}  -  ${ci_rev_high:,.0f}]")
 print(f"  Annual revenue impact       ${annual_rev:>9,.0f}")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # FINAL DECISION
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 all_gr  = gr_default and gr_fraud and gr_spend
 primary = results["primary"]["sig"]
 
@@ -226,26 +226,26 @@ print("  LAUNCH DECISION SCORECARD")
 print(f"{'='*60}")
 checks = [
     ("Primary metric significant (p < 0.05)", primary,     f"p = {p_cr:.6f}"),
-    ("Default rate guardrail",                gr_default,   f"Δ = {dr_lift:+.4%}  (≤+0.50pp)"),
-    ("Fraud rate guardrail",                  gr_fraud,     f"Δ = {fr_lift:+.4%}  (≤+0.10pp)"),
-    ("Monthly spend guardrail",               gr_spend,     f"Δ = {sp_pct:+.2%}  (≥-5.00%)"),
+    ("Default rate guardrail",                gr_default,   f"Delta = {dr_lift:+.4%}  (<=+0.50pp)"),
+    ("Fraud rate guardrail",                  gr_fraud,     f"Delta = {fr_lift:+.4%}  (<=+0.10pp)"),
+    ("Monthly spend guardrail",               gr_spend,     f"Delta = {sp_pct:+.2%}  (>=-5.00%)"),
     ("No novelty inflation",                  not nov_flag, f"Ratio = {nov_ratio:.3f}  (<1.20)"),
 ]
 for label, passed, detail in checks:
     print(f"  {'PASS' if passed else 'FAIL'}  {label:<44} {detail}")
 print(f"\n  Daily revenue uplift  : ${daily_rev_impact:,.0f}")
-print(f"  95% CI               : [${ci_rev_low:,.0f}  –  ${ci_rev_high:,.0f}]")
+print(f"  95% CI               : [${ci_rev_low:,.0f}  -  ${ci_rev_high:,.0f}]")
 print(f"  Annualised           : ${annual_rev:,.0f}")
 print()
 if primary and all_gr:
-    print("    RECOMMENDATION: SHIP — full rollout approved.")
+    print("    RECOMMENDATION: SHIP - full rollout approved.")
     print("      Post-launch: monitor default + fraud rates for 14 days.")
 else:
-    print("    RECOMMENDATION: DO NOT SHIP — review failures above.")
+    print("    RECOMMENDATION: DO NOT SHIP - review failures above.")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # SAVE RESULTS
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 with open(os.path.join(OUT_DIR, "phase4_results_summary.txt"), "w") as f:
     f.write(f"Offer Acceptance Rate\n")
     f.write(f"  Control   : {cr_c:.4%}\n")
@@ -259,11 +259,11 @@ with open(os.path.join(OUT_DIR, "phase4_results_summary.txt"), "w") as f:
             f"spend={'PASS' if gr_spend else 'FAIL'}\n")
     f.write(f"Novelty: ratio={nov_ratio:.3f}  {'FLAG' if nov_flag else 'OK'}\n")
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 # CHARTS
-# ══════════════════════════════════════════════════════════════════════════════
+# ==============================================================================
 
-# ── 4a: Primary metrics ───────────────────────────────────────────────────────
+# -- 4a: Primary metrics -------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
 ax = axes[0]
@@ -306,18 +306,18 @@ for i, (v, m) in enumerate([("control",rpu_c),("treatment",rpu_t)]):
 plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4a_primary_metrics.png"), bbox_inches="tight")
 plt.close()
-print(f"\n  Chart saved → phase4a_primary_metrics.png")
+print(f"\n  Chart saved -> phase4a_primary_metrics.png")
 
-# ── 4b: Subgroup analysis ─────────────────────────────────────────────────────
+# -- 4b: Subgroup analysis -----------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
 pivot_abs = sg.pivot(index="util_tier", columns="pay_segment", values="lift_abs")
 sns.heatmap(pivot_abs*100, annot=True, fmt=".2f", cmap="RdYlGn",
             center=0, linewidths=0.6, ax=axes[0],
             cbar_kws={"label":"Absolute lift (pp)"})
-axes[0].set_title("Absolute Lift (pp) — Util Tier × Payment Segment", fontweight="bold")
+axes[0].set_title("Absolute Lift (pp) - Util Tier x Payment Segment", fontweight="bold")
 
-ut_order = ["Low (<30%)", "Medium (30–70%)", "High (>70%)"]
+ut_order = ["Low (<30%)", "Medium (30-70%)", "High (>70%)"]
 ps_order  = ["On-time", "1-mo delay", "2+ mo delay"]
 x = np.arange(len(ut_order)); w = 0.25
 for i, ps in enumerate(ps_order):
@@ -337,9 +337,9 @@ axes[1].set_title("Relative Lift by Segment\n(Strongest: Medium-util, On-time)",
 plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4b_subgroup_analysis.png"), bbox_inches="tight")
 plt.close()
-print(f"  Chart saved → phase4b_subgroup_analysis.png")
+print(f"  Chart saved -> phase4b_subgroup_analysis.png")
 
-# ── 4c: Guardrails ────────────────────────────────────────────────────────────
+# -- 4c: Guardrails ------------------------------------------------------------
 fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
 
 def gr_bar(ax, ctrl_v, treat_v, threshold_lift, unit, title):
@@ -355,20 +355,20 @@ def gr_bar(ax, ctrl_v, treat_v, threshold_lift, unit, title):
 
 gr_bar(axes[0], dr_c, dr_t, cfg["guardrails"]["default_rate_max_lift_pp"], "%",
        f"Default Rate  |  {'PASS' if gr_default else 'FAIL'}\n"
-       f"(Δ={dr_lift*100:+.3f}pp, thresh ≤+0.50pp)")
+       f"(Delta={dr_lift*100:+.3f}pp, thresh <=+0.50pp)")
 gr_bar(axes[1], fr_c, fr_t, cfg["guardrails"]["fraud_rate_max_lift_pp"], "%",
        f"Fraud Flag Rate  |  {'PASS' if gr_fraud else 'FAIL'}\n"
-       f"(Δ={fr_lift*100:+.3f}pp, thresh ≤+0.10pp)")
+       f"(Delta={fr_lift*100:+.3f}pp, thresh <=+0.10pp)")
 gr_bar(axes[2], sp_c, sp_t, None, "$",
        f"Avg Monthly Spend  |  {'PASS' if gr_spend else 'FAIL'}\n"
-       f"(Δ={sp_pct:+.2%}, thresh ≥-5.00%)")
+       f"(Delta={sp_pct:+.2%}, thresh >=-5.00%)")
 
 plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4c_guardrails.png"), bbox_inches="tight")
 plt.close()
-print(f"  Chart saved → phase4c_guardrails.png")
+print(f"  Chart saved -> phase4c_guardrails.png")
 
-# ── 4d: Novelty + cumulative trend ───────────────────────────────────────────
+# -- 4d: Novelty + cumulative trend -------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
 
 for v, color, lbl in [("control",PALETTE["control"],"Control"),
@@ -393,9 +393,9 @@ axes[1].legend(fontsize=9)
 plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4d_novelty_trend.png"), bbox_inches="tight")
 plt.close()
-print(f"  Chart saved → phase4d_novelty_trend.png")
+print(f"  Chart saved -> phase4d_novelty_trend.png")
 
-# ── 4e: Business impact ───────────────────────────────────────────────────────
+# -- 4e: Business impact -------------------------------------------------------
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
 baseline_daily   = daily_eligible * cr_c * rev_per_acc
@@ -425,5 +425,5 @@ axes[1].set_title("Revenue 95% Confidence Interval", fontweight="bold")
 plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4e_business_impact.png"), bbox_inches="tight")
 plt.close()
-print(f"  Chart saved → phase4e_business_impact.png")
+print(f"  Chart saved -> phase4e_business_impact.png")
 print("\n  Phase 4 complete.")
