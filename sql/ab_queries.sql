@@ -1,6 +1,6 @@
 -- ================================================================
 -- ab_queries.sql
--- Credit Card Limit Increase A/B Test — Production SQL Suite
+-- Credit Card Limit Increase A/B Test - Production SQL Suite
 -- Dialect : Snowflake / Redshift / BigQuery compatible
 -- Author  : Siqi Chen
 --
@@ -14,9 +14,9 @@
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 1 — DATA QUALITY: SRM CHECK
+-- SECTION 1 - DATA QUALITY: SRM CHECK
 -- Detects sample ratio mismatch before any metric read-out.
--- A χ² stat > 6.635 = p < 0.01 → halt analysis.
+-- A chi-squared stat > 6.635 = p < 0.01 -> halt analysis.
 -- ────────────────────────────────────────────────────────────────
 
 WITH counts AS (
@@ -46,17 +46,17 @@ SELECT
     SUM(chi2_component) OVER ()                                     AS chi2_total,
     CASE
         WHEN SUM(chi2_component) OVER () > 6.635
-        THEN '🚨 SRM DETECTED (p<0.01) — halt'
+        THEN 'SRM DETECTED (p<0.01) - halt'
         WHEN SUM(chi2_component) OVER () > 3.841
-        THEN '⚠  SRM SUSPECTED (p<0.05)'
-        ELSE '✅ No SRM'
+        THEN 'SRM SUSPECTED (p<0.05)'
+        ELSE 'No SRM'
     END                                                             AS srm_verdict
 FROM chi2
 ORDER BY variant;
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 2 — DATA QUALITY: CROSS-CONTAMINATION CHECK
+-- SECTION 2 - DATA QUALITY: CROSS-CONTAMINATION CHECK
 -- Flags users who appeared in both variants (invalid exposure).
 -- ────────────────────────────────────────────────────────────────
 
@@ -74,7 +74,7 @@ LIMIT 100;
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 3 — PRIMARY METRIC: OFFER ACCEPTANCE RATE
+-- SECTION 3 - PRIMARY METRIC: OFFER ACCEPTANCE RATE
 -- Overall and by utilization tier × payment segment.
 -- ────────────────────────────────────────────────────────────────
 
@@ -115,7 +115,7 @@ GROUP BY variant
 ORDER BY variant;
 
 
--- 3b. Segment-level acceptance — util_tier × pay_segment
+-- 3b. Segment-level acceptance - util_tier × pay_segment
 WITH user_level AS (
     SELECT
         a.user_id, a.variant, a.util_tier, a.pay_segment,
@@ -156,7 +156,7 @@ GROUP BY util_tier, pay_segment
 ORDER BY
     CASE util_tier
         WHEN 'High (>70%)'      THEN 1
-        WHEN 'Medium (30–70%)'  THEN 2
+        WHEN 'Medium (30-70%)'  THEN 2
         ELSE 3 END,
     CASE pay_segment
         WHEN 'On-time'     THEN 1
@@ -165,11 +165,11 @@ ORDER BY
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 4 — GUARDRAILS: DEFAULT RATE, FRAUD RATE, SPEND
+-- SECTION 4 - GUARDRAILS: DEFAULT RATE, FRAUD RATE, SPEND
 -- Pre-registered thresholds:
---   default rate lift  ≤ +0.50pp
---   fraud rate lift    ≤ +0.10pp
---   monthly spend      ≥ -5.00%
+--   default rate lift  <= +0.50pp
+--   fraud rate lift    <= +0.10pp
+--   monthly spend      >= -5.00%
 -- ────────────────────────────────────────────────────────────────
 
 WITH user_level AS (
@@ -202,13 +202,13 @@ SELECT
           - MAX(CASE WHEN s2.variant='control' THEN s2.default_rate_pct END) OVER (), 4) AS default_lift_pp,
     CASE WHEN (s.default_rate_pct
                - MAX(CASE WHEN s2.variant='control' THEN s2.default_rate_pct END) OVER ()) > 0.50
-         THEN '🚨 BREACH' ELSE '✅ OK' END                         AS default_guardrail,
+         THEN 'BREACH' ELSE 'OK' END                         AS default_guardrail,
     -- Fraud guardrail
     ROUND(s.fraud_rate_pct
           - MAX(CASE WHEN s2.variant='control' THEN s2.fraud_rate_pct END) OVER (), 4) AS fraud_lift_pp,
     CASE WHEN (s.fraud_rate_pct
                - MAX(CASE WHEN s2.variant='control' THEN s2.fraud_rate_pct END) OVER ()) > 0.10
-         THEN '🚨 BREACH' ELSE '✅ OK' END                         AS fraud_guardrail,
+         THEN 'BREACH' ELSE 'OK' END                         AS fraud_guardrail,
     -- Spend guardrail
     ROUND(
         (s.avg_spend
@@ -218,7 +218,7 @@ SELECT
     CASE WHEN (
         (s.avg_spend - MAX(CASE WHEN s2.variant='control' THEN s2.avg_spend END) OVER ())
         / NULLIF(MAX(CASE WHEN s2.variant='control' THEN s2.avg_spend END) OVER (), 0) * 100
-    ) < -5.0 THEN '🚨 BREACH' ELSE '✅ OK' END                    AS spend_guardrail
+    ) < -5.0 THEN 'BREACH' ELSE 'OK' END                    AS spend_guardrail
 FROM summary s
 CROSS JOIN summary s2   -- self-join trick to pivot control values into every row
 GROUP BY s.variant, s.default_rate_pct, s.fraud_rate_pct, s.avg_spend
@@ -226,9 +226,9 @@ ORDER BY s.variant;
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 5 — CUMULATIVE TREND + NOVELTY EFFECT DETECTION
+-- SECTION 5 - CUMULATIVE TREND + NOVELTY EFFECT DETECTION
 -- Running acceptance rate using window functions.
--- Novelty ratio > 1.20 → recommend extending runtime.
+-- Novelty ratio > 1.20 -> recommend extending runtime.
 -- ────────────────────────────────────────────────────────────────
 
 -- 5a. Day-over-day cumulative acceptance rate
@@ -316,19 +316,19 @@ SELECT
                           THEN treat_pct - ctrl_pct END) OVER (), 0)
     , 3)                                                            AS novelty_ratio,
     CASE
-        WHEN time_window = 'steady_d4plus' THEN '📌 Benchmark'
+        WHEN time_window = 'steady_d4plus' THEN 'Benchmark'
         WHEN (treat_pct - ctrl_pct)
              / NULLIF(MAX(CASE WHEN time_window='steady_d4plus'
                                THEN treat_pct - ctrl_pct END) OVER (), 0) > 1.20
-        THEN '⚠  Novelty inflation — extend runtime'
-        ELSE '✅ Consistent with steady state'
+        THEN 'Novelty inflation - extend runtime'
+        ELSE 'Consistent with steady state'
     END                                                             AS novelty_verdict
 FROM pivot
 ORDER BY time_window DESC;
 
 
 -- ────────────────────────────────────────────────────────────────
--- SECTION 6 — BUSINESS IMPACT: REVENUE PROJECTION
+-- SECTION 6 - BUSINESS IMPACT: REVENUE PROJECTION
 -- Incremental acceptances × revenue per acceptance, scaled to
 -- full platform eligible users (8,000/day).
 -- ────────────────────────────────────────────────────────────────
