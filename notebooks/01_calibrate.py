@@ -66,7 +66,7 @@ plt.rcParams.update({
 # =============================================================================
 
 if not os.path.exists(CSV_PATH):
-    print(f"\n  ⚠  Dataset not found at: {CSV_PATH}")
+    print(f"\n  [WARNING]  Dataset not found at: {CSV_PATH}")
     print("  Option A: Download from Kaggle and save as data/UCI_Credit_Card.csv")
     print("  https://www.kaggle.com/datasets/uciml/default-of-credit-card-clients-dataset")
     print("  Option B: Run notebooks/generate_synthetic_uci.py to create a proxy dataset\n")

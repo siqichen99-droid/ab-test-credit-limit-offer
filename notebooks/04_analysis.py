@@ -73,7 +73,7 @@ print(f"  Treatment    {cr_t:.4%}  ({k_t:,} / {n_t:,})")
 print(f"  Lift         {lift_abs:+.4%}  ({lift_rel:+.2%} relative)")
 print(f"  95% CI       [{ci[0]:+.4%},  {ci[1]:+.4%}]")
 print(f"  Z-stat       {z:.4f}   p = {p_cr:.6f}")
-print(f"  Result       {'✅ SIGNIFICANT' if p_cr < ALPHA else '❌ Not significant'}")
+print(f"  Result       {'SIGNIFICANT' if p_cr < ALPHA else 'Not significant'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECONDARY METRIC: Revenue per User (bootstrap CI)
@@ -93,7 +93,7 @@ results["secondary"] = dict(rpu_c=rpu_c, rpu_t=rpu_t, lift=rpu_lift,
 print(f"\n  SECONDARY: Revenue per User")
 print(f"  Control  ${rpu_c:.4f}   Treatment  ${rpu_t:.4f}   Lift ${rpu_lift:+.4f}")
 print(f"  95% Bootstrap CI  [${rpu_ci[0]:+.4f},  ${rpu_ci[1]:+.4f}]")
-print(f"  Mann-Whitney p = {p_rpu:.6f}  {'✅' if p_rpu < ALPHA else '❌'}")
+print(f"  Mann-Whitney p = {p_rpu:.6f}  {'PASS' if p_rpu < ALPHA else 'FAIL'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SUBGROUP ANALYSIS (util_tier × pay_segment)
@@ -134,7 +134,7 @@ results["gr_default"] = dict(rate_c=dr_c, rate_t=dr_t, lift=dr_lift,
 
 print(f"\n  GUARDRAIL 1: Default Rate")
 print(f"  Control {dr_c:.4%}   Treatment {dr_t:.4%}   Δ={dr_lift:+.4%}   "
-      f"threshold ≤+0.50pp   {'✅ PASS' if gr_default else '🚨 FAIL'}")
+      f"threshold ≤+0.50pp   {'PASS' if gr_default else 'FAIL'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GUARDRAIL 2: Fraud Flag Rate
@@ -151,7 +151,7 @@ results["gr_fraud"] = dict(rate_c=fr_c, rate_t=fr_t, lift=fr_lift,
 
 print(f"  GUARDRAIL 2: Fraud Rate")
 print(f"  Control {fr_c:.4%}   Treatment {fr_t:.4%}   Δ={fr_lift:+.4%}   "
-      f"threshold ≤+0.10pp   {'✅ PASS' if gr_fraud else '🚨 FAIL'}")
+      f"threshold ≤+0.10pp   {'PASS' if gr_fraud else 'FAIL'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GUARDRAIL 3: Avg Monthly Spend (must not decline)
@@ -166,7 +166,7 @@ results["gr_spend"] = dict(mean_c=sp_c, mean_t=sp_t, pct_chg=sp_pct,
 
 print(f"  GUARDRAIL 3: Monthly Spend")
 print(f"  Control ${sp_c:,.0f}   Treatment ${sp_t:,.0f}   Δ={sp_pct:+.2%}   "
-      f"threshold ≥-5.00%   {'✅ PASS' if gr_spend else '🚨 FAIL'}")
+      f"threshold ≥-5.00%   {'PASS' if gr_spend else 'FAIL'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # NOVELTY EFFECT
@@ -183,7 +183,7 @@ results["novelty"] = dict(early=early_lift, steady=steady_lift,
 
 print(f"\n  NOVELTY EFFECT")
 print(f"  Early lift (d1-3)  {early_lift:+.4%}   Steady (d4+)  {steady_lift:+.4%}"
-      f"   Ratio {nov_ratio:.3f}   {'⚠ Inflation' if nov_flag else '✅ Stable'}")
+      f"   Ratio {nov_ratio:.3f}   {'Inflation detected' if nov_flag else 'Stable'}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # BUSINESS IMPACT
@@ -232,16 +232,16 @@ checks = [
     ("No novelty inflation",                  not nov_flag, f"Ratio = {nov_ratio:.3f}  (<1.20)"),
 ]
 for label, passed, detail in checks:
-    print(f"  {'✅' if passed else '🚨'}  {label:<44} {detail}")
+    print(f"  {'PASS' if passed else 'FAIL'}  {label:<44} {detail}")
 print(f"\n  Daily revenue uplift  : ${daily_rev_impact:,.0f}")
 print(f"  95% CI               : [${ci_rev_low:,.0f}  –  ${ci_rev_high:,.0f}]")
 print(f"  Annualised           : ${annual_rev:,.0f}")
 print()
 if primary and all_gr:
-    print("  🚀  RECOMMENDATION: SHIP — full rollout approved.")
+    print("    RECOMMENDATION: SHIP — full rollout approved.")
     print("      Post-launch: monitor default + fraud rates for 14 days.")
 else:
-    print("  🛑  RECOMMENDATION: DO NOT SHIP — review failures above.")
+    print("    RECOMMENDATION: DO NOT SHIP — review failures above.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SAVE RESULTS
@@ -354,13 +354,13 @@ def gr_bar(ax, ctrl_v, treat_v, threshold_lift, unit, title):
     ax.set_title(title, fontweight="bold")
 
 gr_bar(axes[0], dr_c, dr_t, cfg["guardrails"]["default_rate_max_lift_pp"], "%",
-       f"Default Rate  |  {'✅ PASS' if gr_default else '🚨 FAIL'}\n"
+       f"Default Rate  |  {'PASS' if gr_default else 'FAIL'}\n"
        f"(Δ={dr_lift*100:+.3f}pp, thresh ≤+0.50pp)")
 gr_bar(axes[1], fr_c, fr_t, cfg["guardrails"]["fraud_rate_max_lift_pp"], "%",
-       f"Fraud Flag Rate  |  {'✅ PASS' if gr_fraud else '🚨 FAIL'}\n"
+       f"Fraud Flag Rate  |  {'PASS' if gr_fraud else 'FAIL'}\n"
        f"(Δ={fr_lift*100:+.3f}pp, thresh ≤+0.10pp)")
 gr_bar(axes[2], sp_c, sp_t, None, "$",
-       f"Avg Monthly Spend  |  {'✅ PASS' if gr_spend else '🚨 FAIL'}\n"
+       f"Avg Monthly Spend  |  {'PASS' if gr_spend else 'FAIL'}\n"
        f"(Δ={sp_pct:+.2%}, thresh ≥-5.00%)")
 
 plt.tight_layout()
@@ -387,7 +387,7 @@ axes[1].axhline(steady_lift*100, ls="--", lw=1.3, color="#2E8B57",
                 label=f"Steady avg: {steady_lift*100:.3f}pp")
 axes[1].set_xlabel("Experiment day"); axes[1].set_ylabel("Lift (pp)")
 axes[1].set_title(f"Novelty Effect  |  Ratio={nov_ratio:.3f}  "
-                  f"{'⚠ Inflation' if nov_flag else '✅ Stable'}", fontweight="bold")
+                  f"{'Inflation detected' if nov_flag else 'Stable'}", fontweight="bold")
 axes[1].legend(fontsize=9)
 
 plt.tight_layout()
@@ -426,4 +426,4 @@ plt.tight_layout()
 plt.savefig(os.path.join(FIG_DIR, "phase4e_business_impact.png"), bbox_inches="tight")
 plt.close()
 print(f"  Chart saved → phase4e_business_impact.png")
-print("\n  Phase 4 complete ✓")
+print("\n  Phase 4 complete.")

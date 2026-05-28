@@ -1,125 +1,125 @@
 {
   "n_total": 30000,
-  "overall_default": 0.1998,
-  "limit_mean": 220448.33,
-  "limit_std": 176680.51,
-  "limit_median": 170000.0,
+  "overall_default": 0.2212,
+  "limit_mean": 167484.32,
+  "limit_std": 129747.66,
+  "limit_median": 140000.0,
   "util_shares": {
-    "Medium (30\u201370%)": 0.5426,
-    "Low (<30%)": 0.4071,
-    "High (>70%)": 0.0503
+    "Low (<30%)": 0.5089,
+    "Medium (30\u201370%)": 0.25,
+    "High (>70%)": 0.2411
   },
   "pay_shares": {
-    "2+ mo delay": 0.5549,
-    "1-mo delay": 0.2825,
-    "On-time": 0.1625
+    "On-time": 0.6644,
+    "2+ mo delay": 0.2793,
+    "1-mo delay": 0.0563
   },
   "segment_defaults": [
     {
       "util_tier": "Low (<30%)",
       "pay_segment": "On-time",
-      "default_rate": 0.1526,
-      "n": 1973,
-      "share": 0.0658
+      "default_rate": 0.1144,
+      "n": 10950,
+      "share": 0.365
     },
     {
       "util_tier": "Low (<30%)",
       "pay_segment": "1-mo delay",
-      "default_rate": 0.1555,
-      "n": 3459,
-      "share": 0.1153
+      "default_rate": 0.2543,
+      "n": 1632,
+      "share": 0.0544
     },
     {
       "util_tier": "Low (<30%)",
       "pay_segment": "2+ mo delay",
-      "default_rate": 0.1864,
-      "n": 6781,
-      "share": 0.226
+      "default_rate": 0.3959,
+      "n": 2685,
+      "share": 0.0895
     },
     {
       "util_tier": "Medium (30\u201370%)",
       "pay_segment": "On-time",
-      "default_rate": 0.1956,
-      "n": 2648,
-      "share": 0.0883
+      "default_rate": 0.1009,
+      "n": 4993,
+      "share": 0.1664
     },
     {
       "util_tier": "Medium (30\u201370%)",
       "pay_segment": "1-mo delay",
-      "default_rate": 0.2007,
-      "n": 4575,
-      "share": 0.1525
+      "default_rate": 0.1111,
+      "n": 45,
+      "share": 0.0015
     },
     {
       "util_tier": "Medium (30\u201370%)",
       "pay_segment": "2+ mo delay",
-      "default_rate": 0.2269,
-      "n": 9056,
-      "share": 0.3019
+      "default_rate": 0.4957,
+      "n": 2463,
+      "share": 0.0821
     },
     {
       "util_tier": "High (>70%)",
       "pay_segment": "On-time",
-      "default_rate": 0.2078,
-      "n": 255,
-      "share": 0.0085
+      "default_rate": 0.1447,
+      "n": 3988,
+      "share": 0.1329
     },
     {
       "util_tier": "High (>70%)",
       "pay_segment": "1-mo delay",
-      "default_rate": 0.224,
-      "n": 442,
-      "share": 0.0147
+      "default_rate": 0.1667,
+      "n": 12,
+      "share": 0.0004
     },
     {
       "util_tier": "High (>70%)",
       "pay_segment": "2+ mo delay",
-      "default_rate": 0.3046,
-      "n": 811,
-      "share": 0.027
+      "default_rate": 0.4938,
+      "n": 3232,
+      "share": 0.1077
     }
   ],
   "limit_by_util": {
-    "Medium (30\u201370%)": {
-      "mean": 220543.03,
-      "std": 176875.41,
-      "p25": 100000.0,
-      "p50": 170000.0,
-      "p75": 280000.0
-    },
     "Low (<30%)": {
-      "mean": 220189.14,
-      "std": 175991.75,
-      "p25": 100000.0,
-      "p50": 170000.0,
-      "p75": 280000.0
+      "mean": 214759.28,
+      "std": 131003.49,
+      "p25": 120000.0,
+      "p50": 200000.0,
+      "p75": 300000.0
     },
     "High (>70%)": {
-      "mean": 221525.2,
-      "std": 180221.22,
-      "p25": 100000.0,
-      "p50": 170000.0,
-      "p75": 280000.0
+      "mean": 105673.9,
+      "std": 99734.94,
+      "p25": 30000.0,
+      "p50": 70000.0,
+      "p75": 150000.0
+    },
+    "Medium (30\u201370%)": {
+      "mean": 130858.02,
+      "std": 115055.22,
+      "p25": 50000.0,
+      "p50": 90000.0,
+      "p75": 180000.0
     }
   },
   "bill_by_util": {
-    "Medium (30\u201370%)": {
-      "mean": 102062.11,
-      "std": 87486.53
-    },
     "Low (<30%)": {
-      "mean": 40800.31,
-      "std": 38802.46
+      "mean": 13355.19,
+      "std": 20485.18
     },
     "High (>70%)": {
-      "mean": 171208.79,
-      "std": 140847.09
+      "mean": 91455.37,
+      "std": 86930.38
+    },
+    "Medium (30\u201370%)": {
+      "mean": 64526.0,
+      "std": 58020.57
     }
   },
-  "acceptance_baseline_control": 0.0763,
-  "acceptance_baseline_treatment": 0.0869,
-  "lift_abs": 0.0105,
-  "lift_rel": 0.138,
+  "acceptance_baseline_control": 0.1106,
+  "acceptance_baseline_treatment": 0.1264,
+  "lift_abs": 0.0157,
+  "lift_rel": 0.142,
   "acceptance_by_segment": {
     "Low (<30%)|On-time": 0.085,
     "Low (<30%)|1-mo delay": 0.062,

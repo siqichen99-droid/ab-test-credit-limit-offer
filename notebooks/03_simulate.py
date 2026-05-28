@@ -197,7 +197,7 @@ counts   = df["variant"].value_counts()
 n_c, n_t = counts["control"], counts["treatment"]
 n_total  = n_c + n_t
 chi2, p  = stats.chisquare([n_c, n_t], f_exp=[n_total/2, n_total/2])
-srm_flag = "🚨 SRM DETECTED — halt analysis" if p < 0.01 else f"✅ No SRM  (p = {p:.4f})"
+srm_flag = "SRM DETECTED — halt analysis" if p < 0.01 else f"No SRM  (p = {p:.4f})"
 print(f"\n  SRM Check: control={n_c:,}  treatment={n_t:,}  χ²={chi2:.4f}  {srm_flag}")
 
 # Per-stratum balance table (each cell should be exactly 1.000)
@@ -301,4 +301,4 @@ plt.tight_layout()
 fig_path = os.path.join(FIG_DIR, "phase3_simulation_validation.png")
 plt.savefig(fig_path, bbox_inches="tight")
 print(f"\n  Chart saved → {fig_path}")
-print("  Phase 3 complete ✓\n")
+print("  Phase 3 complete.\n")
